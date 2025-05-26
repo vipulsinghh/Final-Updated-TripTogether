@@ -119,6 +119,18 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'www.travelandleisure.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.visitnarvik.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
