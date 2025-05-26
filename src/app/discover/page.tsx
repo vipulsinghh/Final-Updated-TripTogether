@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 import type { Trip } from '@/types'; 
 import TripCard from '@/components/core/trip-card';
 import { Button } from '@/components/ui/button';
@@ -11,62 +11,66 @@ import { Mountain, Palmtree, Sun, MountainSnow, Snowflake, Search, RotateCcw, La
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from 'next/link';
 import { categoriesList as appCategories } from '@/types'; 
+import { db } from '@/lib/firebase'; // Assuming your firebase client config is here
+import { collection, getDocs } from 'firebase/firestore';
 
+// Sample Trip Data
+// Reintroducing the sample data as a constant outside the component
 const initialTrips: Trip[] = [
   {
     id: '1',
-    title: 'Bali Adventure Week',
-    destination: 'Bali, Indonesia',
-    startLocation: 'Denpasar Airport (DPS)',
-    startDate: new Date('2024-10-10'),
-    endDate: new Date('2024-10-17'),
-    description: 'Explore volcanoes, surf, and find your zen in beautiful Bali. We will visit waterfalls, rice paddies and enjoy local cuisine.',
-    imageUrls: ['https://plus.unsplash.com/premium_photo-1661955632358-85564b2810b2?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8YmFsaSUyMGlzbGFuZHxlbnwwfHwwfHx8MA%3D%3D'],
-    dataAiHint: 'bali island',
-    maxGroupSize: 8,
-    currentMemberCount: 5,
-    budget: '$1000 - $1500',
-    categories: ['Beach', 'Adventure', 'Cultural'],
+    title: 'Tropical Beach Getaway',
+    destination: 'Maldives',
+    startLocation: 'Male International Airport (MLE)',
+    startDate: new Date('2024-11-15'),
+    endDate: new Date('2024-11-22'),
+    description: 'Relax on pristine beaches, snorkel in crystal-clear waters, and enjoy stunning sunsets.',
+    imageUrls: ['https://www.beachcomber.mu/sites/default/files/styles/fullscreen_image/public/2022-01/MBL-Adult-Pool-Exterior-1920x1080.jpg?itok=o6R4eA_2'],
+    dataAiHint: 'beach tropical maldives',
+    maxGroupSize: 6,
+    currentMemberCount: 3,
+    budget: '$2500 - $3500',
+    categories: ['Beach', 'Wellness'],
     createdById: 'user1',
-    creatorName: 'Admin User',
-    smokingPolicy: 'not_permitted',
-    alcoholPolicy: 'socially',
-    genderPreference: 'mixed',
-    targetAgeGroup: '18-25',
-    targetTravelerType: 'backpackers',
+    creatorName: 'BeachLover',
+    smokingPolicy: 'outside_only',
+    alcoholPolicy: 'permitted',
+    genderPreference: 'any',
+    targetAgeGroup: '26-45',
+    targetTravelerType: 'couples',
     createdAt: new Date(),
     updatedAt: new Date(),
   },
   {
     id: '2',
-    title: 'Tokyo Tech & Tradition',
-    destination: 'Tokyo, Japan',
-    startLocation: 'Narita International Airport (NRT)',
-    startDate: new Date('2024-11-05'),
-    endDate: new Date('2024-11-12'),
-    description: 'Experience the vibrant culture, futuristic tech, and ancient temples of Tokyo. A mix of modern marvels and serene shrines.',
-    imageUrls: ['https://www.hdwallpapers.in/thumbs/2020/man_made_tokyo_hd-t2.jpg'],
-    dataAiHint: 'tokyo skyline',
-    maxGroupSize: 6,
-    currentMemberCount: 3,
-    budget: '$2000 - $2500',
-    categories: ['City Break', 'Cultural', 'Historical'],
+    title: 'Northern Lights Hunt',
+    destination: 'Iceland',
+    startLocation: 'Reykjavik City',
+    startDate: new Date('2024-12-01'),
+    endDate: new Date('2024-12-08'),
+    description: 'Chase the magical Northern Lights, explore ice caves, and soak in geothermal pools.',
+    imageUrls: ['https://www.tripsavvy.com/thmb/SjXkG3Y_41tE9m73pPj-A2p_P1I=/2120x1414/filters:fill(auto,1)/Aurora-Borealis-over-water-and-mountains-565202289-588242293df78c2f7227ff95.jpg'],
+    dataAiHint: 'northern lights iceland',
+    maxGroupSize: 8,
+    currentMemberCount: 5,
+    budget: '$3000 - $4000',
+    categories: ['Ice & Snow', 'Adventure'],
     createdById: 'user2',
-    creatorName: 'JapanLover',
-    smokingPolicy: 'any',
-    alcoholPolicy: 'permitted',
-    genderPreference: 'any',
-    targetAgeGroup: '26-35',
+    creatorName: 'AuroraSeeker',
+    smokingPolicy: 'not_permitted',
+    alcoholPolicy: 'socially',
+    genderPreference: 'mixed',
+    targetAgeGroup: 'any',
     targetTravelerType: 'friends',
     createdAt: new Date(),
     updatedAt: new Date(),
   },
   {
     id: '3',
-    title: 'Parisian Charm Getaway',
+    title: 'Paris Romantic Getaway',
     destination: 'Paris, France',
     startLocation: 'Charles de Gaulle Airport (CDG)',
-    startDate: new Date('2024-12-01'),
+    startDate: new Date('2024-12-01'), // Corrected end date issue from original prompt
     endDate: new Date('2024-12-07'),
     description: 'Indulge in art, cuisine, and romance in the City of Lights. Visit museums, enjoy cafes, and stroll along the Seine.',
     imageUrls: ['https://cdn.bhdw.net/im/eiffel-tower-paris-wallpaper-80283_w635.webp'],
@@ -85,70 +89,7 @@ const initialTrips: Trip[] = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-  {
-    id: '4',
-    title: 'Andes Mountain Trek',
-    destination: 'Peru',
-    startLocation: 'Cusco City Center',
-    startDate: new Date('2025-01-10'),
-    endDate: new Date('2025-01-20'),
-    description: 'Challenging trek through the stunning Andes mountains. Experience breathtaking views and ancient Incan trails.',
-    imageUrls: ['https://w0.peakpx.com/wallpaper/138/445/HD-wallpaper-fitzroy-national-park-argentina-mountain-summit-snow-argentina-national-park-fitz-roy-andes.jpg'],
-    dataAiHint: 'andes mountains peru',
-    maxGroupSize: 10,
-    currentMemberCount: 4,
-    budget: '$2200 - $2800',
-    categories: ['Mountains', 'Adventure', 'Historical'],
-    createdById: 'user4',
-    creatorName: 'TrekMaster',
-    smokingPolicy: 'not_permitted', alcoholPolicy: 'not_permitted', genderPreference: 'mixed', targetAgeGroup: '18-35', targetTravelerType: 'adventure',
-    createdAt: new Date(), updatedAt: new Date(),
-  },
-  {
-    id: '5',
-    title: 'Sahara Desert Expedition',
-    destination: 'Morocco',
-    startLocation: 'Marrakech City',
-    startDate: new Date('2025-02-15'),
-    endDate: new Date('2025-02-22'),
-    description: 'Camel rides, stargazing, and Berber culture in the vast Sahara desert. Sleep under the stars in a desert camp.',
-    imageUrls: ['https://backiee.com/static/wallpapers/1000x563/274546.jpg'],
-    dataAiHint: 'sahara desert morocco',
-    maxGroupSize: 12,
-    currentMemberCount: 6,
-    budget: '$1500 - $2000',
-    categories: ['Desert', 'Adventure', 'Cultural'],
-    createdById: 'user5',
-    creatorName: 'DesertDreamer',
-    smokingPolicy: 'any', alcoholPolicy: 'socially', genderPreference: 'any', targetAgeGroup: 'any', targetTravelerType: 'friends',
-    createdAt: new Date(), updatedAt: new Date(),
-  },
-  {
-    id: '6',
-    title: 'Kashmir Valley Serenity',
-    destination: 'Kashmir, India',
-    startLocation: 'Srinagar International Airport (SXR)',
-    startDate: new Date('2025-03-10'),
-    endDate: new Date('2025-03-17'),
-    description: 'Experience the breathtaking beauty of Kashmir, from serene Dal Lake houseboats to majestic Himalayan foothills. Enjoy local culture and cuisine.',
-    imageUrls: ['https://d2rdhxfof4qmbb.cloudfront.net/wp-content/uploads/20190312112932/Shikara-boats-on-Dal-lake-Srinagar.jpg'],
-    dataAiHint: 'kashmir valley',
-    maxGroupSize: 8,
-    currentMemberCount: 2,
-    budget: '$1200 - $1800',
-    categories: ['Mountains', 'Cultural', 'Hill Stations', 'Wellness'],
-    createdById: 'user6',
-    creatorName: 'KashmirExplorer',
-    smokingPolicy: 'outside_only', 
-    alcoholPolicy: 'socially', 
-    genderPreference: 'any', 
-    targetAgeGroup: 'any', 
-    targetTravelerType: 'friends',
-    createdAt: new Date(), 
-    updatedAt: new Date(),
-  },
 ];
-
 const categoryIcons: { [key: string]: React.ElementType } = {
   'Mountains': Mountain,
   'Beach': Palmtree,
@@ -173,22 +114,68 @@ export default function DiscoverPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [profilePreferencesSet, setProfilePreferencesSet] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const preferencesSet = localStorage.getItem('userProfilePreferencesSet') === 'true';
-      setProfilePreferencesSet(preferencesSet);
-      
-      const signedIn = localStorage.getItem('isUserSignedIn') === 'true';
-      if (!signedIn) {
-        setTrips([]); 
-        return;
+    const fetchTrips = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const querySnapshot = await getDocs(collection(db, 'trips'));
+        const firestoreTrips: Trip[] = [];
+        querySnapshot.forEach((doc) => {
+          // Explicitly cast doc.data() to the structure you expect
+          const data = doc.data();
+          firestoreTrips.push({
+            id: doc.id,
+            title: data.title,
+            destination: data.destination,
+            startLocation: data.startLocation,
+            startDate: data.startDate.toDate(), // Convert Firestore Timestamp to Date
+            endDate: data.endDate.toDate(), // Convert Firestore Timestamp to Date
+            description: data.description,
+            imageUrls: data.imageUrls || [], // Ensure imageUrls is an array
+            dataAiHint: data.dataAiHint || '',
+            maxGroupSize: data.maxGroupSize,
+            currentMemberCount: data.currentMemberCount || 0, // Default to 0 if not present
+            budget: data.budget || '',
+            categories: data.categories || [], // Ensure categories is an array
+            createdById: data.userId, // Assuming userId is stored
+            creatorName: data.creatorName || 'Unknown', // Default name
+            smokingPolicy: data.smokingPolicy || 'any', // Default policy
+            alcoholPolicy: data.alcoholPolicy || 'any', // Default policy
+            genderPreference: data.genderPreference || 'any', // Default preference
+            targetAgeGroup: data.targetAgeGroup || 'any', // Default age group
+            targetTravelerType: data.targetTravelerType || 'any', // Default traveler type
+            createdAt: data.createdAt ? data.createdAt.toDate() : new Date(), // Convert Timestamp
+            updatedAt: data.updatedAt ? data.updatedAt.toDate() : new Date(), // Convert Timestamp
+          } as Trip); 
+        });
+
+        // Combine Firestore data with initial sample data
+        // Create a map of Firestore trip IDs for quick lookup
+        const firestoreTripIds = new Set(firestoreTrips.map(trip => trip.id));
+        // Filter out sample trips that are already present in Firestore
+        const uniqueInitialTrips = initialTrips.filter(trip => !firestoreTripIds.has(trip.id));
+
+        // Combine the unique initial trips with the fetched Firestore trips
+        setTrips([...uniqueInitialTrips, ...firestoreTrips]);
+      } catch (err: any) {
+        console.error("Error fetching trips:", err);
+        setError("Failed to fetch trips. Please try again later.");
+      } finally {
+        setLoading(false);
       }
     }
-    setTrips(initialTrips); 
-  }, []);
-  
+
+    // Fetch from Firestore when the component mounts
+    fetchTrips();
+    
+  }, []); // Empty dependency array means this effect runs once on mount
+
+    // Clear the initial trips and only show fetched ones
   const handleResetFilters = useCallback(() => {
     setSearchTerm('');
     setSelectedCategory(null);
@@ -202,6 +189,14 @@ export default function DiscoverPage() {
     }
   }, [selectedCategory]);
 
+   // Placeholder for fetching user profile preferences (if needed for filtering/recommendations)
+  useEffect(() => {
+     if (typeof window !== 'undefined') {
+      const preferencesSet = localStorage.getItem('userProfilePreferencesSet') === 'true';
+      setProfilePreferencesSet(preferencesSet);
+    }
+  }, [selectedCategory]);
+
   const filteredTrips = trips.filter(trip => {
     const matchesSearch = searchTerm === '' || 
                           trip.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -211,6 +206,26 @@ export default function DiscoverPage() {
     
     return matchesSearch && matchesCategory;
   });
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-8rem)]">
+        <RotateCcw className="h-10 w-10 text-primary animate-spin mr-2" />
+        <p className="text-xl">Loading trips...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive" className="max-w-md mx-auto my-8">
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>
+          {error}
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   if (profilePreferencesSet === null) { 
     return (

@@ -103,10 +103,22 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'www.beachcomber.mu',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'saishishirtours.in',
         port: '',
         pathname: '/**',
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.tripsavvy.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
